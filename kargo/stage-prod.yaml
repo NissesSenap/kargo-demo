@@ -16,7 +16,7 @@ spec:
     spec:
       vars:
         - name: gitopsRepo
-          value: ${GITOPS_REPO_URL}
+          value: https://github.com/NissesSenap/kargo-demo.git
         - name: imageRepo
           value: public.ecr.aws/nginx/nginx
         - name: srcPath
