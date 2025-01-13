@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: test
+  name: test-kognic
   namespace: kargo-demo
 spec:
   requestedFreight:
