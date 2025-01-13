@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kargo-kognic
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - stage: test
+          - stage: uat
+          - stage: prod
+  template:
+    metadata:
+      name: kargo-kognic-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: kargo-kognic:{{stage}}
+    spec:
+      project: default
+      source:
+        repoURL: ${GITOPS_REPO_URL}
+        targetRevision: main
+        path: stages-kognic/{{stage}}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: kargo-kognic-{{stage}}
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
