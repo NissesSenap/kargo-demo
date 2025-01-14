@@ -44,13 +44,6 @@ spec:
             repoURL: ${{ vars.gitopsRepo }}
             prNumber: ${{ outputs['open-pr'].prNumber }}
           uses: git-wait-for-pr
-        - config:
-            apps:
-              - name: kargo-kognic-${{ ctx.stage }}
-                sources:
-                  - desiredRevision: ${{ outputs.commit.commit }}
-                    repoURL: ${{ vars.gitopsRepo }}
-          uses: argocd-update
       vars:
         - name: gitopsRepo
           value: https://github.com/NissesSenap/kargo-demo.git
