@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: test-kognic
+  name: test
   namespace: kargo-kognic
 spec:
   promotionTemplate:
@@ -11,7 +11,7 @@ spec:
             checkout:
               - branch: main
                 path: ${{ vars.srcPath }}
-              - branch: stage/${{ ctx.stage }}
+              - branch: stage-kognic/${{ ctx.stage }}
                 create: true
                 path: ${{ vars.outPath }}
             repoURL: ${{ vars.gitopsRepo }}
@@ -26,10 +26,6 @@ spec:
                 tag: ${{ imageFrom(vars.imageRepo).Tag }}
             path: ${{ vars.srcPath }}/base
           uses: kustomize-set-image
-        - config:
-            outPath: ${{ vars.outPath }}/manifests.yaml
-            path: ${{ vars.srcPath }}/stages/${{ ctx.stage }}
-          uses: kustomize-build
         - as: commit
           config:
             messageFromSteps:

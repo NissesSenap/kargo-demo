@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: prod-kognic
+  name: prod
   namespace: kargo-kognic
 spec:
   requestedFreight:
@@ -10,7 +10,7 @@ spec:
         name: kargo-kognic
       sources:
         stages:
-          - uat-kognic
+          - uat
   promotionTemplate:
     spec:
       vars:
