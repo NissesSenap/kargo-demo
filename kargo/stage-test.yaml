@@ -19,12 +19,17 @@ spec:
         - config:
             path: ${{ vars.outPath }}
           uses: git-clear
+        - as: copy
+          uses: copy
+          config:
+            inPath: ${{ vars.srcPath }}
+            outPath: ${{ vars.outPath }}
         - as: update-image
           config:
             images:
               - image: ${{ vars.imageRepo }}
                 tag: ${{ imageFrom(vars.imageRepo).Tag }}
-            path: ${{ vars.srcPath }}/base
+            path: ${{ vars.outPath }}/stages-kognic/${{ ctx.stage }}
           uses: kustomize-set-image
         - as: commit
           config:
@@ -32,9 +37,24 @@ spec:
               - update-image
             path: ${{ vars.outPath }}
           uses: git-commit
-        - config:
+        - as: push
+          config:
             path: ${{ vars.outPath }}
+            generateTargetBranch: true
           uses: git-push
+        - as: open-pr
+          config:
+            repoURL: ${{ vars.gitopsRepo }}
+            provider: github
+            sourceBranch: ${{ outputs.push.branch }}
+            targetBranch: stage-kognic/${{ ctx.stage }}
+            createTargetBranch: true
+          uses: git-open-pr
+        - as: wait-for-pr
+          config:
+            repoURL: ${{ vars.gitopsRepo }}
+            prNumber: ${{ outputs['open-pr'].prNumber }}
+          uses: git-wait-for-pr
         - config:
             apps:
               - name: kargo-kognic-${{ ctx.stage }}
