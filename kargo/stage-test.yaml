@@ -6,34 +6,41 @@ metadata:
 spec:
   promotionTemplate:
     spec:
+      vars:
+        - name: gitRepo
+          value: https://github.com/NissesSenap/kargo-demo.git
+        - name: srcPath
+          value: ./src
+        - name: imageRepo
+          value: public.ecr.aws/nginx/nginx
       steps:
-        - config:
+        - uses: git-clone
+          config:
+            repoURL: ${{ vars.gitRepo }}
             checkout:
               - branch: main
                 path: ${{ vars.srcPath }}
-            repoURL: ${{ vars.gitopsRepo }}
-          uses: git-clone
-        - as: update-image
+        - uses: kustomize-set-image
+          as: update-image
           config:
-            images:
-              - image: ${{ vars.imageRepo }}
-                tag: ${{ imageFrom(vars.imageRepo).Tag }}
             path: ${{ vars.srcPath }}/stages-kognic/${{ ctx.stage }}
-          uses: kustomize-set-image
-        - as: commit
+            images:
+              - image: public.ecr.aws/nginx/nginx
+                tag: ${{ imageFrom(vars.imageRepo).Tag }}
+        - uses: git-commit
+          as: commit
           config:
+            path: ${{ vars.srcPath }}
             messageFromSteps:
               - update-image
-            path: ${{ vars.srcPath }}
-          uses: git-commit
         - as: push
+          uses: git-push
           config:
             path: ${{ vars.srcPath }}
             generateTargetBranch: true
-          uses: git-push
         - as: open-pr
           config:
-            repoURL: ${{ vars.gitopsRepo }}
+            repoURL: ${{ vars.gitRepo }}
             provider: github
             sourceBranch: ${{ outputs.push.branch }}
             targetBranch: main
@@ -41,18 +48,9 @@ spec:
           uses: git-open-pr
         - as: wait-for-pr
           config:
-            repoURL: ${{ vars.gitopsRepo }}
+            repoURL: ${{ vars.gitRepo }}
             prNumber: ${{ outputs['open-pr'].prNumber }}
           uses: git-wait-for-pr
-      vars:
-        - name: gitopsRepo
-          value: https://github.com/NissesSenap/kargo-demo.git
-        - name: imageRepo
-          value: public.ecr.aws/nginx/nginx
-        - name: srcPath
-          value: ./src
-        - name: outPath
-          value: ./out
   requestedFreight:
     - origin:
         kind: Warehouse
