@@ -1,0 +1,64 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: kargo-kognic
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: kargo-kognic
+      sources:
+        stages:
+          - uat
+  promotionTemplate:
+    spec:
+      vars:
+        - name: gitopsRepo
+          value: https://github.com/NissesSenap/kargo-demo.git
+        - name: imageRepo
+          value: public.ecr.aws/nginx/nginx
+        - name: srcPath
+          value: ./src
+        - name: outPath
+          value: ./out
+      steps:
+        - config:
+            checkout:
+              - branch: main
+                path: ${{ vars.srcPath }}
+              - branch: stage/${{ ctx.stage }}
+                create: true
+                path: ${{ vars.outPath }}
+            repoURL: ${{ vars.gitopsRepo }}
+          uses: git-clone
+        - config:
+            path: ${{ vars.outPath }}
+          uses: git-clear
+        - as: update-image
+          config:
+            images:
+              - image: ${{ vars.imageRepo }}
+                tag: ${{ imageFrom(vars.imageRepo).Tag }}
+            path: ${{ vars.srcPath }}/base
+          uses: kustomize-set-image
+        - config:
+            outPath: ${{ vars.outPath }}/manifests.yaml
+            path: ${{ vars.srcPath }}/stages/${{ ctx.stage }}
+          uses: kustomize-build
+        - as: commit
+          config:
+            messageFromSteps:
+              - update-image
+            path: ${{ vars.outPath }}
+          uses: git-commit
+        - config:
+            path: ${{ vars.outPath }}
+          uses: git-push
+        - config:
+            apps:
+              - name: kargo-demo-${{ ctx.stage }}
+                sources:
+                  - desiredRevision: ${{ outputs.commit.commit }}
+                    repoURL: ${{ vars.gitopsRepo }}
+          uses: argocd-update
