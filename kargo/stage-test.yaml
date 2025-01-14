@@ -20,13 +20,15 @@ spec:
             checkout:
               - branch: main
                 path: ${{ vars.srcPath }}
-        - uses: kustomize-set-image
+        - uses: yaml-update
           as: update-image
           config:
-            path: ${{ vars.srcPath }}/stages-kognic/${{ ctx.stage }}
-            images:
-              - image: public.ecr.aws/nginx/nginx
-                tag: ${{ imageFrom(vars.imageRepo).Tag }}
+            path: ${{ vars.srcPath }}/stages-kognic/${{ ctx.stage }}/values.yaml
+            updates:
+              - key: grafana-operator.image.tag
+                value: ${{ imageFrom(vars.imageRepo).Tag }}
+              - key: grafana-operator.image.repository
+                value: ${{ vars.imageRepo }}
         - uses: git-commit
           as: commit
           config:
