@@ -11,35 +11,24 @@ spec:
             checkout:
               - branch: main
                 path: ${{ vars.srcPath }}
-              - branch: stage-kognic/${{ ctx.stage }}
-                create: true
-                path: ${{ vars.outPath }}
             repoURL: ${{ vars.gitopsRepo }}
           uses: git-clone
-        - config:
-            path: ${{ vars.outPath }}
-          uses: git-clear
-        - as: copy
-          uses: copy
-          config:
-            inPath: ${{ vars.srcPath }}
-            outPath: ${{ vars.outPath }}
         - as: update-image
           config:
             images:
               - image: ${{ vars.imageRepo }}
                 tag: ${{ imageFrom(vars.imageRepo).Tag }}
-            path: ${{ vars.outPath }}/stages-kognic/${{ ctx.stage }}
+            path: ${{ vars.srcPath }}/stages-kognic/${{ ctx.stage }}
           uses: kustomize-set-image
         - as: commit
           config:
             messageFromSteps:
               - update-image
-            path: ${{ vars.outPath }}
+            path: ${{ vars.srcPath }}
           uses: git-commit
         - as: push
           config:
-            path: ${{ vars.outPath }}
+            path: ${{ vars.srcPath }}
             generateTargetBranch: true
           uses: git-push
         - as: open-pr
@@ -47,7 +36,7 @@ spec:
             repoURL: ${{ vars.gitopsRepo }}
             provider: github
             sourceBranch: ${{ outputs.push.branch }}
-            targetBranch: stage-kognic/${{ ctx.stage }}
+            targetBranch: main
             createTargetBranch: true
           uses: git-open-pr
         - as: wait-for-pr
