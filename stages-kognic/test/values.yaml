@@ -1,0 +1,4 @@
+grafana-operator:
+  image:
+    repository: public.ecr.aws/nginx/nginx
+    tag: 1.27.3
